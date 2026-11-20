@@ -1,0 +1,32 @@
+# Native AX to libaxrt checks for the wired inference primitives.
+fn verify_range(label, actual, lower, upper) -> i32:
+    if actual > lower:
+        if actual < upper:
+            print(label)
+            return 0
+    print("FAIL: runtime result was outside expected bounds")
+    return 1
+
+fn main() -> i32:
+    values: Tensor[f32, 4] = tensor([1.0, 1.0, 1.0, 1.0])
+    ones: Tensor[f32, 4] = tensor([1.0, 1.0, 1.0, 1.0])
+    rope_values: Tensor[f32, 4] = tensor([1.0, 0.0, 1.0, 0.0])
+    gate: Tensor[f32, 4] = tensor([0.0, 1.0, 0.0, 1.0])
+    up: Tensor[f32, 4] = tensor([2.0, 3.0, 4.0, 5.0])
+    failures: i32 = 0
+
+    failures = failures + verify_range("PASS AX RMSNorm native-kernel binding",
+                                       matmul(rmsnorm(values), ones), 3.99, 4.01)
+    failures = failures + verify_range("PASS AX RoPE native-kernel binding",
+                                       matmul(rope(values), ones), 3.999, 4.001)
+    failures = failures + verify_range("PASS AX SwiGLU native-kernel binding",
+                                       matmul(swiglu(values), ones), 2.92, 2.93)
+    failures = failures + verify_range("PASS AX position-aware RoPE binding",
+                                       matmul(rope(rope_values, 1), ones), 2.38, 2.40)
+    failures = failures + verify_range("PASS AX shaped RoPE binding",
+                                       matmul(rope(rope_values, 1, 4, 1), ones), 2.38, 2.40)
+    failures = failures + verify_range("PASS AX two-input SwiGLU binding",
+                                       matmul(swiglu(gate, up), ones), 5.84, 5.86)
+    failures = failures + verify_range("PASS AX two-input GeGLU binding",
+                                       matmul(geglu(gate, up), ones), 6.72, 6.74)
+    return failures

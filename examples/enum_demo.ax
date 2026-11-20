@@ -1,0 +1,7 @@
+enum Color:
+    Red
+    Green
+    Blue
+fn main() -> i32:
+    print("enum Color")
+    return 0

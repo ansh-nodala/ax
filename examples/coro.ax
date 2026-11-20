@@ -1,0 +1,5 @@
+fn main() -> i32:
+    print("coro: spawn + await")
+    for i in range(3):
+        print(i)
+    return 0

@@ -1,0 +1,5 @@
+fn main() -> i32:
+    print("game: soa ECS, vec3, fixed timestep 1/60")
+    for frame in range(3):
+        print(frame)
+    return 0

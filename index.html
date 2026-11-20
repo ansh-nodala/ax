@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="An offline, practical guide to the AX language compiler, runtime, AI examples, tools, and current project status.">
+  <title>AX Language — Project Guide</title>
+  <link rel="stylesheet" href="docs/site.css">
+  <script src="docs/site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to guide</a>
+  <header class="topbar">
+    <div class="brand-lockup">
+      <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">☰</button>
+      <a class="brand" href="#top" aria-label="AX guide home"><span class="brand-mark">AX</span><span>Project guide</span></a>
+    </div>
+    <div class="topbar-tools">
+      <label class="search-wrap" for="guide-search"><span aria-hidden="true">⌕</span><input id="guide-search" type="search" placeholder="Search this guide" autocomplete="off"><kbd>/</kbd></label>
+      <button class="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span><span class="theme-label">Theme</span></button>
+      <a class="repo-link" href="README.md">README <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+
+  <div class="layout" id="top">
+    <aside class="sidebar" id="sidebar" aria-label="Guide navigation">
+      <div class="sidebar-intro">
+        <p class="eyebrow">AX LANGUAGE</p>
+        <p class="sidebar-title">Learn the project</p>
+        <p class="sidebar-copy">Build a program, explore AI kernels, and know exactly what works today.</p>
+      </div>
+      <nav class="toc" aria-label="Sections">
+        <a href="#quick-start">01&nbsp; Quick start</a>
+        <a href="#first-program">02&nbsp; First program</a>
+        <a href="#language">03&nbsp; AX language</a>
+        <a href="#ai-workflow">04&nbsp; AI and LLM runtime</a>
+        <a href="#systems-runtime">05&nbsp; Game and systems runtime</a>
+        <a href="#backends">06&nbsp; Backends</a>
+        <a href="#commands">07&nbsp; Command reference</a>
+        <a href="#interop">08&nbsp; C/C++ interop</a>
+        <a href="#developer-tools">09&nbsp; Developer tools</a>
+        <a href="#project-map">10&nbsp; Project map</a>
+        <a href="#verification">11&nbsp; Verification and limits</a>
+        <a href="#troubleshooting">12&nbsp; Troubleshooting</a>
+        <a href="#learning-path">13&nbsp; Fast learning path</a>
+      </nav>
+      <div class="sidebar-note"><span class="status-dot"></span><span>Offline guide · no external assets</span></div>
+    </aside>
+
+    <main id="main-content" class="content">
+      <section class="hero guide-section" id="overview" data-search="overview AX native compiler learning project guide">
+        <p class="eyebrow">A practical guide for the checked-out project</p>
+        <h1>Go from <span class="accent">.ax</span> source to a running program.</h1>
+        <p class="hero-lede">AX is an experimental, indentation-sensitive language with a native compiler and a C++ runtime. Start with a short program, then explore tensor operations, AI runtime kernels, native builds, and the tools included in this repository.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#quick-start">Build AX <span aria-hidden="true">↓</span></a>
+          <a class="button button-secondary" href="#ai-workflow">Explore AI runtime <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="status-banner"><span class="status-pill partial">Experimental</span><p>This is not a complete 110-feature production language. The guide separates tested behavior from partial, prototype, or absent features.</p><a href="docs/PHASE3_MASTER_VERIFICATION_MATRIX.md">Read the full feature matrix <span aria-hidden="true">↗</span></a></div>
+      </section>
+
+      <section class="guide-section" id="quick-start" data-search="quick start install build cmake compiler Linux x86_64 ARM64 PATH ax-env">
+        <div class="section-heading"><span class="section-number">01</span><div><p class="eyebrow">Get ready</p><h2>Build the compiler</h2></div></div>
+        <p>Build from the repository root. The project uses CMake and C++20; the build includes the compiler, runtime, command-line tools, and test executables.</p>
+        <div class="requirements-grid">
+          <article class="mini-card"><span class="mini-icon">01</span><h3>Operating system</h3><p>Linux x86_64 or Linux ARM64. Native builds select the host architecture.</p></article>
+          <article class="mini-card"><span class="mini-icon">02</span><h3>Toolchain</h3><p>CMake 3.22+, a C compiler, a C++20 compiler, and Make or Ninja.</p></article>
+          <article class="mini-card"><span class="mini-icon">03</span><h3>Build checks</h3><p>The CMake configuration enables <code>-Wall -Wextra</code>.</p></article>
+        </div>
+        <pre><code>cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel 2</code></pre>
+        <p>The build creates both <code>build/ax</code> and the compatibility command <code>build/axc</code>. To type <code>ax</code> without a path prefix, add the build directory to your current shell:</p>
+        <pre><code>source scripts/ax-env.sh
+ax --help</code></pre>
+        <p>If an older build only has <code>build/axc</code>, the helper creates a <code>build/ax</code> link. This PATH change lasts for the current terminal session.</p>
+        <div class="callout callout-info"><strong>ARM64 build:</strong> run <code>bash scripts/build_arm64.sh</code> on a native Linux ARM64 machine. On x86_64 it stops with an explicit message; an x86_64 build does not verify ARM64.</div>
+      </section>
+
+      <section class="guide-section" id="first-program" data-search="first program hello.ax compile build run native executable print function return">
+        <div class="section-heading"><span class="section-number">02</span><div><p class="eyebrow">First success</p><h2>Write, compile, and run</h2></div></div>
+        <p>Create <code>hello.ax</code> in the repository or a scratch folder:</p>
+        <pre><code>fn main() -&gt; i32:
+    print("Hello from AX")
+    return 0</code></pre>
+        <p>Compile to an executable, then run it:</p>
+        <pre><code>ax build hello.ax -o /tmp/hello
+/tmp/hello</code></pre>
+        <p>Or ask the compiler to compile and run in one step:</p>
+        <pre><code>ax run hello.ax</code></pre>
+        <div class="explain-grid">
+          <article><h3><code>fn main() -&gt; i32:</code></h3><p>Defines the program entry point and its integer exit status.</p></article>
+          <article><h3>Four-space indentation</h3><p>A colon begins a block. Indentation is part of the syntax style.</p></article>
+          <article><h3><code>print(...)</code></h3><p>Writes a scalar, string, or supported tensor value to standard output.</p></article>
+          <article><h3><code>return 0</code></h3><p>Ends the program successfully.</p></article>
+        </div>
+        <div class="callout callout-success"><strong>Try the included demo:</strong> <code>ax build examples/compiled_demo.ax -o /tmp/ax-demo &amp;&amp; /tmp/ax-demo</code> prints <code>42</code>.</div>
+      </section>
+
+      <section class="guide-section" id="language" data-search="AX language syntax types function if else for while tensor struct enum trait macro parallel for">
+        <div class="section-heading"><span class="section-number">03</span><div><p class="eyebrow">Learn the source language</p><h2>AX syntax you can use now</h2></div></div>
+        <p>The best reference for the exact supported subset is the compiler plus the passing examples. AX currently has functions, typed locals, arithmetic and comparisons, conditionals, loops, tensor literals, and calls to runtime operations.</p>
+        <h3>Typed values and expressions</h3>
+        <pre><code>fn main() -&gt; i32:
+    price: f32 = 19.0
+    count: i32 = 2
+    total = price * count
+    print(total)
+    return 0</code></pre>
+        <h3>Branches and loops</h3>
+        <pre><code>fn classify(value: f32) -&gt; i32:
+    if value &gt; 0.0:
+        print("positive")
+    else:
+        print("zero or negative")
+    return 0
+
+fn main() -&gt; i32:
+    for item in range(3):
+        print(item)
+    return 0</code></pre>
+        <p>Other examples show <code>while</code> and <code>parallel for</code>. Exact typing, ownership rules, closures, and advanced syntax are not equivalent to a mature language; check a feature in a small source file before depending on it.</p>
+        <h3>Tensor literals and shape checking</h3>
+        <pre><code>fn main() -&gt; i32:
+    values: Tensor[f32, 4] = tensor([1.0, 2.0, 3.0, 4.0])
+    print(softmax(values))
+    return 0</code></pre>
+        <p>Check a file without linking using <code>ax check file.ax</code>. <a href="examples/bad_shape.ax"><code>examples/bad_shape.ax</code></a> intentionally contains an incompatible tensor operation, so it should be rejected.</p>
+        <div class="callout callout-warn"><strong>Declarations are not proof of full language support.</strong> Struct, enum, trait, and macro-shaped declarations appear in the examples, but full trait dispatch, hygienic macro expansion, pattern matching, and advanced type features are not complete. The <a href="docs/PHASE3_MASTER_VERIFICATION_MATRIX.md">feature matrix</a> records the status.</div>
+      </section>
+
+      <section class="guide-section" id="ai-workflow" data-search="AI LLM machine learning tensor softmax RMSNorm RoPE SwiGLU GeGLU FlashAttention tokenizer SafeTensors KV cache autodiff GPU Vulkan @gpu">
+        <div class="section-heading"><span class="section-number">04</span><div><p class="eyebrow">Use the AI pieces</p><h2>AI and LLM runtime guide</h2></div></div>
+        <p>AX has a small set of tensor operations callable from `.ax` and a broader collection of native C++ runtime APIs. The runtime components are useful for learning and experimentation; they do not yet combine into a complete model-training or model-serving stack.</p>
+        <div class="lesson-steps">
+          <article><span>STEP 1</span><h3>Start with an AX tensor</h3><p>Read and run the small examples before building a model.</p><code>ax run examples/softmax_demo.ax</code></article>
+          <article><span>STEP 2</span><h3>Exercise runtime bindings</h3><p>This example checks AX calls into several native inference kernels.</p><code>ax run examples/m2_runtime.ax</code></article>
+          <article><span>STEP 3</span><h3>Inspect a backend path</h3><p>Generate output and inspect it; generation alone does not run on accelerator hardware.</p><code>ax emit-ptx examples/cuda_kernel.ax</code></article>
+        </div>
+        <h3>Run a real GPU kernel with <code>@gpu</code></h3>
+        <p><code>@gpu</code> uses Vulkan compute and targets physical GPUs with a compatible Vulkan compute driver. Intel Arc was verified here; other GPUs require compatible drivers. Check the device, then build the kernel suite:</p>
+        <pre><code>ax devices
+ax check examples/gpu_ai_kernels.ax
+ax build examples/gpu_ai_kernels.ax -o /tmp/ax-gpu-ai.axg
+/tmp/ax-gpu-ai.axg</code></pre>
+        <pre><code>@gpu
+fn scale_bias(values: Tensor[f32, 8]) -&gt; Tensor[f32, 8]:
+    return values * 2.0 + 1.0</code></pre>
+        <p>The example runs a 16×16 shared-memory tiled matrix multiplication; row-wise softmax, RMSNorm, and layernorm reductions; multi-input arithmetic; fused SwiGLU; and ReLU, sigmoid, SiLU, and GELU kernels. Shader code compiles to SPIR-V and is embedded in the native executable. If no physical GPU exists, <code>ax check</code> and <code>ax build</code> report an error; GPU functions never silently run on CPU. Install a Vulkan driver plus <code>glslc</code> or <code>glslangValidator</code>.</p>
+        <p>If <code>ax devices</code> lists multiple GPUs, set <code>AX_GPU_DEVICE=1</code> before compiling and running to select device index 1. Index 0 is the default.</p>
+        <div class="callout callout-warn"><strong>Kernel limits:</strong> fixed positive tensor dimensions and <code>f32</code> only; no dynamic shapes or automatic fusion between separate functions. AX reuses the Vulkan device and caches compiled pipelines, but still creates buffers and dispatch resources per call. CUDA, ROCm, and TPU output commands do not execute their kernels. Read the <a href="docs/GPU_GUIDE.md">full GPU guide</a>.</div>
+        <h3>AX-callable tensor operations</h3>
+        <p>Current examples exercise <code>matmul</code>, <code>gemm</code>, <code>relu</code>, <code>softmax</code>, <code>layernorm</code>, <code>rmsnorm</code>, <code>rope</code>, <code>swiglu</code>, <code>geglu</code>, <code>gelu</code>, <code>silu</code>, <code>sigmoid</code>, <code>tanh</code>, <code>mse_loss</code>, <code>cross_entropy</code>, and <code>adamw</code>. See <a href="examples/all_features.ax"><code>examples/all_features.ax</code></a> and <a href="examples/m2_runtime.ax"><code>examples/m2_runtime.ax</code></a> for calls exercised by smoke tests.</p>
+        <h3>Native C++ AI components</h3>
+        <div class="table-scroll"><table><thead><tr><th>Header</th><th>What it provides</th><th>Important boundary</th></tr></thead><tbody>
+          <tr><td><code>runtime/core/ai_kernels.hpp</code></td><td>RoPE and ALiBi, RMSNorm, SwiGLU/GeGLU, tiled attention, GQA, MoE routing</td><td>Native CPU kernels; not a full GPU inference engine</td></tr>
+          <tr><td><code>runtime/core/quantized.hpp</code></td><td>Pack/unpack formats for i1, trit, i2, i4, FP4, FP8, and BF16; packed trit matmul</td><td>Not compiler-native types or an ARM SIMD BitNet stack</td></tr>
+          <tr><td><code>runtime/core/autodiff.hpp</code></td><td>C++ graph evaluation, VJP, JVP, Jacobian, Hessian</td><td>Runtime graph API; no automatic AX compiler gradient pass</td></tr>
+          <tr><td><code>runtime/core/tokenizer.hpp</code></td><td>Byte BPE and Unigram tokenization</td><td>C++ API, no full AX tokenizer module</td></tr>
+          <tr><td><code>runtime/core/kv_cache.hpp</code></td><td>Paged KV storage and radix prefix sharing</td><td>No continuous-batching model server</td></tr>
+          <tr><td><code>runtime/core/model_io.hpp</code></td><td>SafeTensors writer and mmap reader</td><td>GGUF and ONNX support are absent</td></tr>
+        </tbody></table></div>
+        <h3>Call a native AI kernel from C++</h3>
+        <pre><code>#include "runtime/core/ai_kernels.hpp"
+#include &lt;array&gt;
+
+int main() {
+    const std::array&lt;float, 4&gt; input{1.0f, 2.0f, 3.0f, 4.0f};
+    const auto output = ax::ai::rms_norm(input, 1, input.size());
+    return output.size() == input.size() ? 0 : 1;
+}</code></pre>
+        <p>Link the CMake <code>axrt</code> target. This operation returns a new <code>std::vector&lt;float&gt;</code> owned by the caller.</p>
+        <h3>Get useful help from a coding AI</h3>
+        <p>Give the assistant the project’s actual limits, then ask for one small step at a time. This prompt works with a coding assistant opened at the repository root:</p>
+        <pre><code>You are helping me use this AX language repository. First read README.md and
+docs/PHASE3_MASTER_VERIFICATION_MATRIX.md. Use only commands, syntax, and APIs
+that exist in this checkout. Do not assume roadmap features are implemented.
+For an AX change, make the smallest edit, then tell me to run:
+  source scripts/ax-env.sh
+  ax check &lt;file.ax&gt;
+  ax run &lt;file.ax&gt;
+If the task needs C++ runtime APIs, show the exact header and CMake target.
+Explain each step in beginner-friendly language and call out unsupported parts.</code></pre>
+        <p>Good first asks: “Explain <code>examples/m2_runtime.ax</code> line by line” or “Help me make one RMSNorm example.” Afterward, run <code>ax check</code>/<code>ax run</code> and compare new APIs with the feature matrix. A small example passing does not make the whole roadmap feature production-ready.</p>
+        <h3>Example: differentiate a scalar in C++</h3>
+        <pre><code>#include "runtime/core/autodiff.hpp"
+
+int main() {
+    ax::ai::DiffGraph graph(1);
+    const auto x = graph.input(0);
+    const auto y = graph.multiply(x, x);
+    const auto gradient = graph.vjp({3.0}, y);
+    // gradient[0] is 6.0
+    return gradient[0] == 6.0 ? 0 : 1;
+}</code></pre>
+        <p>Link a C++ program to the CMake <code>axrt</code> target to use this API. The C++ unit tests exercise gradients against finite differences.</p>
+        <div class="callout callout-warn"><strong>What AX AI does not yet include:</strong> a production LLM trainer/server, full model import, Python/PyTorch/NumPy bridge, speculative decoding, or a complete GPU inference/training stack. The <code>stdlib/</code> directory contains category folders but not a complete importable `.ax` standard library.</div>
+      </section>
+
+      <section class="guide-section" id="systems-runtime" data-search="game engine ECS entity component system physics BVH fixed-point render graph concurrency coroutine actor channel distributed allreduce checkpoint networking">
+        <div class="section-heading"><span class="section-number">05</span><div><p class="eyebrow">Native runtime beyond tensors</p><h2>Game, concurrency, and systems APIs</h2></div></div>
+        <p>Several engine-style components are implemented as C++ runtime APIs. AX source examples for game, coroutine, and distribution features are mostly smoke/syntax samples; use the runtime headers and the C++ tests to study the actual implemented behavior.</p>
+        <div class="table-scroll"><table><thead><tr><th>Area</th><th>Start with</th><th>What is implemented</th><th>Boundary</th></tr></thead><tbody>
+          <tr><td>Entity/component storage</td><td><code>runtime/core/ecs.hpp</code></td><td>Dense SoA storage for one fixed component signature, generation-checked entities, typed queries, and <code>parallel_for</code></td><td>No dynamic archetype migration or compiler query scheduler</td></tr>
+          <tr><td>Physics helpers</td><td><code>runtime/core/physics.hpp</code></td><td>Spring energy/gradient and triangle BVH build/raycast</td><td>Not the requested full collision suite or NEON acceleration</td></tr>
+          <tr><td>Deterministic math</td><td><code>runtime/core/fixed.hpp</code></td><td>Q16.16/Q32.32 fixed-point arithmetic, integer square root, CORDIC sine/cosine</td><td>Not exposed as a native `.ax` type</td></tr>
+          <tr><td>Render planning</td><td><code>runtime/core/rendergraph.hpp</code></td><td>Pass dependency ordering, cycle checks, barriers, and transient lifetime alias planning</td><td>No full Vulkan command-buffer or shader pipeline integration</td></tr>
+          <tr><td>Task scope</td><td><code>runtime/coro/coro.hpp</code></td><td>Cooperative stop-token cancellation and child joining</td><td>No compiler-enforced coroutine lifetime system</td></tr>
+          <tr><td>Channels and actors</td><td><code>runtime/coro/channel.hpp</code>, <code>runtime/coro/actor.hpp</code></td><td>Bounded SPSC/MPMC queues, queue polling select, bounded actor mailbox</td><td>Not a complete async networking or supervision framework</td></tr>
+          <tr><td>Local distributed runtime</td><td><code>runtime/dist/dist.hpp</code>, <code>runtime/dist/checkpoint.hpp</code></td><td>Separate-process localhost all-reduce and master checkpoint path</td><td>No elastic recovery, distributed trainer, or WAN peer mesh</td></tr>
+        </tbody></table></div>
+        <h3>Small C++ ECS example</h3>
+        <pre><code>#include "runtime/core/ecs.hpp"
+
+struct Position { float x = 0.0f; };
+struct Velocity { float x = 0.0f; };
+
+int main() {
+    ax::game::ArchetypeWorld&lt;Position, Velocity&gt; world;
+    world.create(Position{0.0f}, Velocity{1.0f});
+    auto [positions, velocities] = world.query&lt;Position, Velocity&gt;();
+    ax::game::parallel_for(world.size(), 2, [&](std::size_t begin, std::size_t end) {
+        for (std::size_t i = begin; i &lt; end; ++i) positions[i].x += velocities[i].x;
+    });
+    return 0;
+}</code></pre>
+        <p>Use the CMake <code>axrt</code> target for runtime components implemented in `.cpp`; template-only APIs such as the ECS also need C++20 and thread linking. `examples/game_loop.ax`, `examples/coro.ax`, and `examples/distribute_demo.ax` are introductory smoke examples, not full engine loops or distributed-training programs.</p>
+      </section>
+
+      <section class="guide-section" id="backends" data-search="backend x86_64 ARM64 assembly PTX CUDA ROCm HIP StableHLO TPU SPIR-V Vulkan emitter accelerator GPU execute">
+        <div class="section-heading"><span class="section-number">06</span><div><p class="eyebrow">Generate native and accelerator output</p><h2>Backends: compile, emit, execute</h2></div></div>
+        <p>Ordinary <code>ax build</code> compiles for the host CPU. A source file with supported <code>@gpu</code> functions instead embeds Vulkan compute kernels and requires a physical GPU at compile time.</p>
+        <div class="backend-grid">
+          <article><span class="backend-tag native">HOST NATIVE</span><h3>x86_64 / ARM64</h3><p><code>ax build</code> chooses the host. Linux ARM64 verification requires an ARM64 machine.</p></article>
+          <article><span class="backend-tag emit">EMITTER</span><h3>AArch64 assembly</h3><p><code>ax emit-asm file.ax</code> prints ARM64 assembly even on x86_64.</p></article>
+          <article><span class="backend-tag emit">GPU EXECUTION</span><h3>Vulkan <code>@gpu</code></h3><p>Tiled GEMM, row reductions, activations, and elementwise kernels compile to SPIR-V.</p></article>
+          <article><span class="backend-tag emit">EMITTER</span><h3>PTX / ROCm / TPU</h3><p><code>emit-ptx</code>, <code>emit-rocm</code>, and <code>emit-stablehlo</code> emit output for external runtimes; they are not launched by AX.</p></article>
+          <article><span class="backend-tag emit">EMITTER</span><h3>StableHLO / SPIR-V</h3><p>StableHLO emits MLIR text. <code>emit-spirv</code> compiles a supported <code>@gpu</code> kernel; without one, its old fallback module remains minimal.</p></article>
+        </div>
+        <pre><code>ax emit-ir examples/m2_runtime.ax &gt; /tmp/model.mir
+ax emit-asm examples/matmul.ax &gt; /tmp/matmul-arm64.s
+ax emit-ptx examples/cuda_kernel.ax &gt; /tmp/kernel.ptx
+ax emit-rocm examples/rocm_kernel.ax &gt; /tmp/kernel.hip
+ax emit-stablehlo examples/tpu_kernel.ax &gt; /tmp/kernel.mlir
+ax emit-spirv examples/gpu_ai_kernels.ax -o /tmp/gpu.spv</code></pre>
+        <div class="callout callout-info"><strong>Key distinction:</strong> only the documented <code>@gpu</code> subset runs through Vulkan. PTX/ROCm/StableHLO generation does not launch CUDA/AMD/TPU code.</div>
+      </section>
+
+      <section class="guide-section" id="commands" data-search="CLI commands build run check devices emit-ir emit-asm ptx rocm stablehlo spirv cook bench test axpkg">
+        <div class="section-heading"><span class="section-number">07</span><div><p class="eyebrow">Keep the command handy</p><h2>Command reference</h2></div></div>
+        <div class="table-scroll"><table><thead><tr><th>Command</th><th>Purpose</th><th>Notes</th></tr></thead><tbody>
+          <tr><td><code>ax --help</code></td><td>List compiler commands</td><td>Same CLI is also available as <code>axc</code>.</td></tr>
+          <tr><td><code>ax build file.ax -o program</code></td><td>Build a native host executable</td><td>Optionally add <code>--shared</code> for a C ABI `.so`.</td></tr>
+          <tr><td><code>ax run file.ax</code></td><td>Build and run a source file</td><td>Convenient for examples and small programs.</td></tr>
+          <tr><td><code>ax check file.ax</code></td><td>Run parser, type, and shape checks</td><td>Does not link an executable.</td></tr>
+          <tr><td><code>ax devices</code></td><td>List physical Vulkan compute GPUs</td><td>Ignores software-only Vulkan devices.</td></tr>
+          <tr><td><code>ax emit-ir file.ax</code></td><td>Print optimized MIR</td><td>Useful for seeing compiler lowering.</td></tr>
+          <tr><td><code>ax emit-asm file.ax</code></td><td>Print AArch64 assembly</td><td>Do not send this to an x86 assembler.</td></tr>
+          <tr><td><code>ax emit-ptx file.ax</code></td><td>Print PTX plus host launcher output</td><td>Not a GPU launch by itself.</td></tr>
+          <tr><td><code>ax emit-rocm file.ax</code></td><td>Print ROCm/HIP output</td><td>Needs an external ROCm flow for execution.</td></tr>
+          <tr><td><code>ax emit-stablehlo file.ax</code></td><td>Print StableHLO MLIR</td><td>For inspection or external tooling.</td></tr>
+          <tr><td><code>ax emit-spirv file.ax -o out.spv</code></td><td>Compile the first <code>@gpu</code> kernel to SPIR-V</td><td>Without <code>@gpu</code>, the legacy fallback module is minimal.</td></tr>
+          <tr><td><code>ax cook input.obj -o out.axb</code></td><td>Cook supported OBJ, PCM WAV, or PNG</td><td>glTF and general image/audio transcoding are absent.</td></tr>
+          <tr><td><code>ax bench</code></td><td>Run coroutine and dot-product smoke benchmarks</td><td>Does not calculate statistical baselines.</td></tr>
+          <tr><td><code>ctest --test-dir build --output-on-failure</code></td><td>Run registered suites</td><td>Run from the repository checkout.</td></tr>
+        </tbody></table></div>
+        <div class="callout callout-warn"><strong>Roadmap names are not current CLI commands.</strong> This checkout does not implement <code>ax repl</code>, <code>ax migrate</code>, <code>ax inspect</code>, <code>ax doc</code>, <code>ax profile</code>, <code>ax watch</code>, or <code>axpkg new</code>. There is no general <code>--target</code>, <code>--sanitize</code>, <code>--lto</code>, or <code>--pgo</code> option.</div>
+        <h3>Package utility: <code>axpkg</code></h3>
+        <pre><code>axpkg init
+axpkg list
+axpkg add package_name
+axpkg remove package_name
+axpkg lock
+axpkg verify</code></pre>
+        <div class="callout callout-warn"><strong>Use <code>axpkg init</code> in a new project folder.</strong> It writes <code>axpkg.toml</code> in the current directory and truncates an existing file. The current tool edits package metadata and hashes the source tree; it does not fetch or resolve dependencies.</div>
+      </section>
+
+      <section class="guide-section" id="interop" data-search="C ABI shared library embed C++ AxVal ax_runtime.h ax_embed.h libax_embed.so header">
+        <div class="section-heading"><span class="section-number">08</span><div><p class="eyebrow">Connect AX to another program</p><h2>C ABI and embedding</h2></div></div>
+        <h3>Build a shared library</h3>
+        <p>AX functions except <code>main</code> are emitted as exports. The compiler writes a `.so` and a generated header next to it:</p>
+        <pre><code>ax build examples/shared_math.ax --shared -o /tmp/libshared_math.so</code></pre>
+        <p>The public ABI uses <code>AxVal*</code>. Compile a C consumer like the one exercised by <code>tests/test_shared_cli.sh</code>:</p>
+        <pre><code>#include "ax_runtime.h"
+#include "libshared_math.h"
+
+int main(void) {
+    AxVal* result = ax_scale(ax_scalar(21.0), ax_scalar(2.0));
+    ax_print(result);
+    return 0;
+}</code></pre>
+        <pre><code>cc -I/path/to/project/include -I/tmp caller.c \
+  -L/tmp -lshared_math -Wl,-rpath,/tmp -o /tmp/caller
+/tmp/caller</code></pre>
+        <p>Current constraints: shared `.so` output, at most six `AxVal*` parameters per exported function, and no general scalar C ABI conversion or static `.a` export mode. The public `AxVal` ABI has no release function yet, so treat repeated allocations from a long-lived host as experimental.</p>
+        <h3>Embed compiler services in C</h3>
+        <p>Include <code>include/ax_embed.h</code> and link the CMake target <code>ax_embed</code>. The static library provides source checking plus MIR/assembly emission, not an in-process JIT:</p>
+        <pre><code>#include "ax_embed.h"
+#include &lt;stdio.h&gt;
+
+int main(void) {
+    AxEmbedBuffer output = {0};
+    const char* source = "fn main() -&gt; i32:\n    return 0\n";
+    int result = ax_embed_emit_ir(source, "example.ax", &amp;output);
+    if (result == 0) puts(output.data);
+    ax_embed_buffer_release(&amp;output);
+    return result;
+}</code></pre>
+        <p>Return values are <code>0</code> success, <code>1</code> source diagnostics, and <code>2</code> API/internal error. Always release output buffers with <code>ax_embed_buffer_release</code>.</p>
+      </section>
+
+      <section class="guide-section" id="developer-tools" data-search="formatter linter LSP editor vscode neovim debugger axfmt axlint axlsp axdbg">
+        <div class="section-heading"><span class="section-number">09</span><div><p class="eyebrow">Explore the rest of the toolchain</p><h2>Developer tools and editor support</h2></div></div>
+        <div class="tool-cards">
+          <article><h3><code>axfmt</code></h3><p>Normalizes indentation and whitespace. It is a lightweight formatter, so inspect changes before accepting them.</p><pre><code>build/axfmt file.ax -o formatted.ax</code></pre></article>
+          <article><h3><code>axedit</code></h3><p>Native terminal editor with AX keyword colors, file-local completions, function signatures, and live type hints.</p><pre><code>ax edit examples/hello.ax</code></pre></article>
+          <article><h3><code>axlint</code></h3><p>Runs simple heuristic checks such as line length and likely unused variables.</p><pre><code>build/axlint file.ax</code></pre></article>
+          <article><h3><code>axlsp</code></h3><p>A limited JSON-RPC-over-stdio prototype with static completion and hover responses. Semantic diagnostics, go-to-definition, and benchmark code lenses are not complete.</p></article>
+          <article><h3><code>axdbg</code></h3><p>A command-loop prototype. It does not execute AX programs instruction by instruction or record/replay runtime events.</p></article>
+        </div>
+        <p>There is no JIT REPL, compiled notebook engine, Python-to-AX migrator, auto-documentation generator, flamegraph profiler, or deterministic record/replay debugger in this checkout.</p>
+        <p><code>axedit</code> is the built-in terminal editor. <code>editors/vscode/</code> contains file-extension/syntax metadata, and the Neovim snippets are starter material; those external editor integrations are not polished IDE extensions today.</p>
+      </section>
+
+      <section class="guide-section" id="project-map" data-search="repository folder map compiler runtime stdlib tools tests examples docs editors">
+        <div class="section-heading"><span class="section-number">10</span><div><p class="eyebrow">Find your way around</p><h2>Project map</h2></div></div>
+        <div class="table-scroll"><table><thead><tr><th>Directory</th><th>Contents</th><th>Start here</th></tr></thead><tbody>
+          <tr><td><code>compiler/lexer</code></td><td>Source tokens and indentation handling</td><td><code>lexer.cpp</code>, <code>indent.cpp</code></td></tr>
+          <tr><td><code>compiler/parser</code></td><td>AX syntax tree and parser</td><td><code>parser.cpp</code>, <code>expr_parser.cpp</code></td></tr>
+          <tr><td><code>compiler/sema</code></td><td>Name/type checks and tensor shape checks</td><td><code>sema.cpp</code>, <code>shape_checker.cpp</code></td></tr>
+          <tr><td><code>compiler/ir</code>, <code>compiler/opt</code></td><td>MIR construction and basic optimization</td><td><code>mir.cpp</code>, <code>dce.cpp</code>, <code>fusion.cpp</code></td></tr>
+          <tr><td><code>compiler/backends</code></td><td>Native and accelerator emitters</td><td><code>arm64/</code>, <code>x86_64/</code>, then the backend you need</td></tr>
+          <tr><td><code>runtime/core</code></td><td>Tensor ABI, AI kernels, math, I/O and game-related APIs</td><td><code>ai_kernels.hpp</code>, <code>quantized.hpp</code>, <code>autodiff.hpp</code></td></tr>
+          <tr><td><code>runtime/coro</code></td><td>Tasks, channels, actor mailbox, I/O polling</td><td><code>coro.hpp</code>, <code>channel.hpp</code></td></tr>
+          <tr><td><code>runtime/dist</code></td><td>Localhost collectives and checkpointing</td><td><code>dist.hpp</code>, <code>checkpoint.hpp</code></td></tr>
+          <tr><td><code>tools/</code></td><td>Compiler CLI, package tool, formatter, linter, LSP/debug prototypes</td><td><code>axc/cli.cpp</code></td></tr>
+          <tr><td><code>examples/</code>, <code>tests/</code></td><td>Runnable snippets, smoke examples, unit and integration tests</td><td><code>hello.ax</code>, <code>all_features.ax</code>, C++ tests</td></tr>
+          <tr><td><code>stdlib/</code></td><td>Category directories for future AX modules</td><td>Not yet a complete importable standard library</td></tr>
+          <tr><td><code>docs/</code></td><td>GPU guide, milestone reports, and feature audit</td><td><a href="docs/GPU_GUIDE.md"><code>GPU_GUIDE.md</code></a></td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="guide-section" id="verification" data-search="verification tests ctest limits matrix status incomplete ARM64 x86_64 feature 110">
+        <div class="section-heading"><span class="section-number">11</span><div><p class="eyebrow">Set the right expectations</p><h2>Verification and current limits</h2></div></div>
+        <div class="verification-cards">
+          <article><span class="metric">9 / 9</span><h3>Recorded CTest suites</h3><p>Host-side unit/integration suites passed in the last recorded clean x86_64 build.</p></article>
+          <article><span class="metric">0 / 110</span><h3>Fully specified milestones</h3><p>No feature is marked fully verified against the complete 110-feature request; many subcomponents are implemented.</p></article>
+          <article><span class="metric">Not run</span><h3>Full ARM64 gate</h3><p>The authoring environment was x86_64 without an ARM64 cross compiler/emulator.</p></article>
+        </div>
+        <p>Read the reports for the evidence and the exact partial/missing list:</p>
+        <ul class="report-links">
+          <li><a href="docs/PHASE3_MASTER_VERIFICATION_MATRIX.md">All 110 features — master matrix</a></li>
+          <li><a href="docs/MILESTONE_1_REPORT.md">Milestone 1 — core compiler and systems</a></li>
+          <li><a href="docs/MILESTONE_2_REPORT.md">Milestone 2 — AI and backends</a></li>
+          <li><a href="docs/MILESTONE_3_REPORT.md">Milestone 3 — distributed and game runtime</a></li>
+          <li><a href="docs/MILESTONE_4_REPORT.md">Milestone 4 — concurrency and safety</a></li>
+          <li><a href="docs/MILESTONE_5_REPORT.md">Milestone 5 — interop and tooling</a></li>
+          <li><a href="VERIFICATION_REPORT.md">Latest build and test evidence</a></li>
+        </ul>
+        <div class="callout callout-info"><strong>What the passing tests mean:</strong> they validate the listed host examples and runtime components. They do not prove every roadmap item exists, nor do they prove GPU, TPU, or ARM64 execution unless a report explicitly says so.</div>
+      </section>
+
+      <section class="guide-section" id="troubleshooting" data-search="troubleshooting ax command not found compiler not found shape error ARM64 assembly x86 build">
+        <div class="section-heading"><span class="section-number">12</span><div><p class="eyebrow">Solve common setup problems</p><h2>Troubleshooting</h2></div></div>
+        <details><summary><code>ax: command not found</code></summary><p>From the repository root, run <code>source scripts/ax-env.sh</code>. The helper adds <code>build/</code> to this shell's PATH and can create an alias from an existing <code>build/axc</code>. If both compiler binaries are missing, build with CMake first.</p></details>
+        <details><summary><code>ax: compiler not found</code></summary><p>The helper cannot find a built compiler. Run <code>cmake -S . -B build -DCMAKE_BUILD_TYPE=Release</code> followed by <code>cmake --build build --parallel 2</code>. If you used a custom build directory, set <code>AX_BUILD_DIR</code> before sourcing the helper.</p></details>
+        <details><summary><code>@gpu</code> reports no Vulkan GPU</summary><p>Run <code>ax devices</code>. CMake must find Vulkan development files, the system needs a physical GPU driver that exposes a compute queue, and kernel compilation needs <code>glslc</code> or <code>glslangValidator</code>. CPU-only <code>llvmpipe</code> is deliberately rejected. AX does not silently fall back to CPU for an <code>@gpu</code> function.</p></details>
+        <details><summary>AArch64 assembly reports invalid instructions on x86</summary><p><code>ax emit-asm</code> emits ARM64 assembly. Use <code>ax build</code> to compile for the current host, or assemble the emitted file with an AArch64 toolchain.</p></details>
+        <details><summary>A tensor expression is rejected</summary><p>Run <code>ax check file.ax</code> first. Verify tensor ranks and dimensions in each operation. <code>examples/bad_shape.ax</code> is intentionally invalid and is expected to fail.</p></details>
+        <details><summary>Why does an accelerator example run on CPU?</summary><p>The native executable build uses the host backend. An emitter command can produce PTX, ROCm, StableHLO, or SPIR-V output, but a separate hardware/runtime integration is needed to execute accelerator kernels.</p></details>
+      </section>
+
+      <section class="guide-section" id="learning-path" data-search="learning path beginner tutorial learn quickly AX AI starter checklist">
+        <div class="section-heading"><span class="section-number">13</span><div><p class="eyebrow">A short route through the project</p><h2>Learn AX in 20 minutes</h2></div></div>
+        <ol class="path-list">
+          <li><strong>Build once.</strong><span>Run the two CMake commands in <a href="#quick-start">Quick start</a>.</span></li>
+          <li><strong>Enable the command.</strong><span><code>source scripts/ax-env.sh</code>, then <code>ax --help</code>.</span></li>
+          <li><strong>Run a scalar program.</strong><span>Build and run <code>examples/compiled_demo.ax</code>; follow the values to see how <code>42</code> is computed.</span></li>
+          <li><strong>Try a tensor.</strong><span>Run <code>examples/softmax_demo.ax</code>, then inspect <code>examples/matmul.ax</code>.</span></li>
+          <li><strong>Exercise AI bindings.</strong><span>Run <code>examples/m2_runtime.ax</code>; compare its calls with <code>runtime/core/ai_kernels.hpp</code>.</span></li>
+          <li><strong>Inspect lowering.</strong><span>Use <code>ax emit-ir</code> and <code>ax emit-asm</code> on a small example.</span></li>
+          <li><strong>Check the boundary.</strong><span>Read the master matrix before treating an experimental API as production-ready.</span></li>
+        </ol>
+        <div class="final-cta"><div><p class="eyebrow">Ready to try it?</p><h3>Start with one file. Make the compiler show its work.</h3></div><a class="button button-primary" href="examples/compiled_demo.ax">Open the demo <span aria-hidden="true">↗</span></a></div>
+      </section>
+
+      <footer class="page-footer"><span>AX project guide · local files only</span><span><a href="README.md">README</a> · <a href="docs/PHASE3_MASTER_VERIFICATION_MATRIX.md">Feature matrix</a> · <a href="#top">Back to top ↑</a></span></footer>
+    </main>
+  </div>
+</body>
+</html>

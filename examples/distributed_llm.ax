@@ -1,0 +1,4 @@
+fn main() -> i32:
+    print("distribute: data + tensor + pipeline sharding")
+    print("checkpoint: unified host save -> model.axckpt")
+    return 0

@@ -1,0 +1,12 @@
+fn main() -> i32:
+    print("Hello from AX on ARM64")
+    x: f32 = 2.0
+    y = x * 3.0 + 1.0
+    print(y)
+    hello()
+    return 0
+
+
+ fn hello() -> i32:
+     print("hello ax")
+     return 0

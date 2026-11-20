@@ -1,0 +1,1 @@
+{"scopeName":"source.ax","patterns":[{"name":"keyword.control.ax","match":"\\b(fn|load|coro|spawn|await|yield|select|chan|distribute|mesh|shard)\\b"}]}

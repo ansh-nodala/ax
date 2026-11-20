@@ -1,0 +1,5 @@
+distribute(mesh="auto"):
+    print("distributed")
+fn main() -> i32:
+    print("distribute demo")
+    return 0

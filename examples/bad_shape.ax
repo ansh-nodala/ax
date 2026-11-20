@@ -1,0 +1,6 @@
+fn main() -> i32:
+    a: Tensor[f32, 2, 3] = tensor([1.0, 2.0])
+    b: Tensor[f32, 4, 5] = tensor([1.0, 2.0])
+    c = matmul(a, b)
+    print(c)
+    return 0

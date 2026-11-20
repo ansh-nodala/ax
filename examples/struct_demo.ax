@@ -1,0 +1,7 @@
+struct Vec3:
+    x: f32
+    y: f32
+    z: f32
+fn main() -> i32:
+    print("struct Vec3")
+    return 0

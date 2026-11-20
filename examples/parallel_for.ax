@@ -1,0 +1,4 @@
+fn main() -> i32:
+    parallel for i in range(4):
+        print(i)
+    return 0

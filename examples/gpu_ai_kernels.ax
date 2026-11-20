@@ -1,0 +1,64 @@
+@gpu
+fn gpu_scale_bias(values: Tensor[f32, 8]) -> Tensor[f32, 8]:
+    return values * 2.0 + 1.0
+
+@gpu
+fn gpu_add(left: Tensor[f32, 8], right: Tensor[f32, 8]) -> Tensor[f32, 8]:
+    return left + right
+
+@gpu
+fn gpu_matmul(left: Tensor[f32, 2, 3], right: Tensor[f32, 3, 2]) -> Tensor[f32, 2, 2]:
+    return matmul(left, right)
+
+@gpu
+fn gpu_softmax(values: Tensor[f32, 2, 4]) -> Tensor[f32, 2, 4]:
+    return softmax(values)
+
+@gpu
+fn gpu_rmsnorm(values: Tensor[f32, 2, 4]) -> Tensor[f32, 2, 4]:
+    return rmsnorm(values)
+
+@gpu
+fn gpu_layernorm(values: Tensor[f32, 2, 4]) -> Tensor[f32, 2, 4]:
+    return layernorm(values)
+
+@gpu
+fn gpu_swiglu(gate: Tensor[f32, 8], up: Tensor[f32, 8]) -> Tensor[f32, 8]:
+    return swiglu(gate, up)
+
+@gpu
+fn gpu_relu(values: Tensor[f32, 8]) -> Tensor[f32, 8]:
+    return relu(values)
+
+@gpu
+fn gpu_sigmoid(values: Tensor[f32, 8]) -> Tensor[f32, 8]:
+    return sigmoid(values)
+
+@gpu
+fn gpu_silu(values: Tensor[f32, 8]) -> Tensor[f32, 8]:
+    return silu(values)
+
+@gpu
+fn gpu_gelu(values: Tensor[f32, 8]) -> Tensor[f32, 8]:
+    return gelu(values)
+
+fn main() -> i32:
+    vector_a: Tensor[f32, 8] = tensor([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0])
+    vector_b: Tensor[f32, 8] = tensor([1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0])
+    gate: Tensor[f32, 8] = tensor([0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5])
+    up: Tensor[f32, 8] = tensor([1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0])
+    matrix_a: Tensor[f32, 2, 3] = tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+    matrix_b: Tensor[f32, 3, 2] = tensor([7.0, 8.0, 9.0, 10.0, 11.0, 12.0])
+    rows: Tensor[f32, 2, 4] = tensor([1.0, 2.0, 3.0, 4.0, 0.0, 0.0, 0.0, 0.0])
+    print(gpu_scale_bias(vector_a))
+    print(gpu_add(vector_a, vector_b))
+    print(gpu_matmul(matrix_a, matrix_b))
+    print(gpu_softmax(rows))
+    print(gpu_rmsnorm(rows))
+    print(gpu_layernorm(rows))
+    print(gpu_swiglu(gate, up))
+    print(gpu_relu(vector_a))
+    print(gpu_sigmoid(vector_a))
+    print(gpu_silu(vector_a))
+    print(gpu_gelu(vector_a))
+    return 0

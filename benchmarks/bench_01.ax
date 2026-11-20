@@ -1,0 +1,7 @@
+// Benchmark 01
+fn main() -> i32:
+    s: f32 = 0.0
+    for k in range(1000):
+        s = s + 1.0
+    print(s)
+    return 0

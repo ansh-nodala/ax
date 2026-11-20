@@ -1,0 +1,6 @@
+@cuda
+fn add_kernel(x: Tensor[f32, N]) -> Tensor[f32, N]:
+    return x + 1.0
+fn main() -> i32:
+    print(add_kernel(tensor([1.0, 2.0])))
+    return 0

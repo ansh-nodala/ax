@@ -1,0 +1,145 @@
+# Single-file smoke check for AX syntax, native execution, and backend emitters.
+# GPU and distributed sections below are syntax/codegen checks; they do not run
+# on the CPU as GPU kernels or distributed jobs.
+
+struct Point:
+    x: f32
+    y: f32
+
+enum RunState:
+    Ready
+    Finished
+
+trait Scalable:
+    fn scale(value: f32) -> f32
+
+macro build_tag:
+    print("macro declaration parsed")
+
+@autodiff
+fn square(value: f32) -> f32:
+    return value * value
+
+@maxpower
+fn add_values(left: f32, right: f32) -> f32:
+    return left + right
+
+@cuda
+fn cuda_scale(values: Tensor[f32, 4]) -> Tensor[f32, 4]:
+    return values * 2.0
+
+@rocm
+fn rocm_relu(values: Tensor[f32, 4]) -> Tensor[f32, 4]:
+    return relu(values)
+
+@tpu
+fn tpu_scale(values: Tensor[f32, 2, 2]) -> Tensor[f32, 2, 2]:
+    return values * 2.0
+
+@vulkan
+fn vulkan_color() -> vec4:
+    return vec4(1.0, 0.5, 0.25, 1.0)
+
+fn choose_value(value: f32) -> f32:
+    if value > 0.0:
+        return 10.0
+    else:
+        return 20.0
+
+fn verify(label, actual, expected) -> i32:
+    if actual == expected:
+        print(label)
+        return 0
+    else:
+        print("FAIL: value did not match")
+        return 1
+
+fn worker() -> i32:
+    print("PASS spawn/await call path")
+    return 0
+
+fn main() -> i32:
+    print("AX all-features smoke check")
+
+    failures: i32 = 0
+    scalar: f32 = 2.0
+    scalar_result = scalar * 3.0 + 1.0
+    failures = failures + verify("PASS scalar arithmetic", scalar_result, 7.0)
+    failures = failures + verify("PASS user function", add_values(2.0, 3.0), 5.0)
+    failures = failures + verify("PASS autodiff-decorated function", square(3.0), 9.0)
+    failures = failures + verify("PASS if/else true branch", choose_value(1.0), 10.0)
+    failures = failures + verify("PASS if/else false branch", choose_value(-1.0), 20.0)
+    failures = failures + verify("PASS remainder", 7.0 % 4.0, 3.0)
+
+    for_total: f32 = 0.0
+    for item in range(4):
+        for_total = for_total + 1.0
+    failures = failures + verify("PASS for loop", for_total, 4.0)
+
+    parallel_total: f32 = 0.0
+    parallel for item in range(2):
+        parallel_total = parallel_total + 1.0
+    failures = failures + verify("PASS parallel-for lowering", parallel_total, 2.0)
+
+    while_total: f32 = 0.0
+    while while_total < 3.0:
+        while_total = while_total + 1.0
+    failures = failures + verify("PASS while loop", while_total, 3.0)
+
+    values: Tensor[f32, 4] = tensor([-1.0, 2.0, 3.0, 4.0])
+    ones: Tensor[f32, 4] = tensor([1.0, 1.0, 1.0, 1.0])
+    matrix: Tensor[f32, 2, 2] = tensor([1.0, 2.0, 3.0, 4.0])
+    failures = failures + verify("PASS tensor length", len(values), 4.0)
+    failures = failures + verify("PASS matmul", matmul(values, ones), 8.0)
+    failures = failures + verify("PASS gemm", gemm(values, ones), 8.0)
+    failures = failures + verify("PASS mean squared error", mse_loss(values, ones), 4.5)
+    failures = failures + verify("PASS cross-entropy result shape", len(cross_entropy(values, ones)), 0.0)
+
+    failures = failures + verify("PASS relu output shape", len(relu(values)), 4.0)
+    failures = failures + verify("PASS softmax output shape", len(softmax(values)), 4.0)
+    failures = failures + verify("PASS layernorm output shape", len(layernorm(values)), 4.0)
+    failures = failures + verify("PASS rmsnorm output shape", len(rmsnorm(values)), 4.0)
+    failures = failures + verify("PASS rope output shape", len(rope(values)), 4.0)
+    failures = failures + verify("PASS swiglu output shape", len(swiglu(values)), 4.0)
+    failures = failures + verify("PASS sigmoid output shape", len(sigmoid(values)), 4.0)
+    failures = failures + verify("PASS tanh output shape", len(tanh(values)), 4.0)
+    failures = failures + verify("PASS gelu output shape", len(gelu(values)), 4.0)
+    failures = failures + verify("PASS silu output shape", len(silu(values)), 4.0)
+    failures = failures + verify("PASS adamw output shape", len(adamw(values, ones, 0.1)), 4.0)
+    failures = failures + verify("PASS vec4 output shape", len(vulkan_color()), 4.0)
+    failures = failures + verify("PASS CUDA-decorated function", len(cuda_scale(values)), 4.0)
+    failures = failures + verify("PASS ROCm-decorated function", len(rocm_relu(values)), 4.0)
+    failures = failures + verify("PASS TPU-decorated function", len(tpu_scale(matrix)), 4.0)
+
+    # Parser/lowering smoke checks for coroutine, channel, select, and distributed
+    # block syntax. These wrappers run their bodies inline in the current backend.
+    coro:
+        print("PASS coro block syntax")
+        yield
+    chan:
+        print("PASS channel block syntax")
+    select:
+        print("PASS select block syntax")
+    spawn worker()
+    await worker()
+    distribute(mesh="auto"):
+        print("PASS distribute block syntax")
+    mesh("auto"):
+        print("PASS mesh block syntax")
+    shard("values"):
+        print("PASS shard block syntax")
+    pipeline(stages=2):
+        print("PASS pipeline block syntax")
+    replicate("values"):
+        print("PASS replicate block syntax")
+    allreduce("sum"):
+        print("PASS allreduce block syntax")
+    unleash("maxpower"):
+        print("PASS unleash block syntax")
+
+    if failures == 0.0:
+        print("ALL NATIVE CHECKS PASSED")
+        return 0
+    else:
+        print("NATIVE CHECKS FAILED")
+        return 1

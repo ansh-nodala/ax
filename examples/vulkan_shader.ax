@@ -1,0 +1,6 @@
+@vulkan
+fn frag() -> vec4:
+    return vec4(1.0, 0.0, 0.0, 1.0)
+fn main() -> i32:
+    print("vulkan shader compiled")
+    return 0

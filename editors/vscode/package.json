@@ -1,0 +1,1 @@
+{"name":"ax-lang","displayName":"AX Language","version":"2.0.0","engines":{"vscode":"^1.80.0"},"contributes":{"languages":[{"id":"ax","extensions":[".ax",".axi"]}]}}

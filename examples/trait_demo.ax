@@ -1,0 +1,5 @@
+trait Add:
+    fn add(x: f32) -> f32
+fn main() -> i32:
+    print("trait Add")
+    return 0

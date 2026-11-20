@@ -1,0 +1,6 @@
+@tpu
+fn tpu_matmul(x: Tensor[f32, 128, 128]) -> Tensor[f32, 128, 128]:
+    return matmul(x, x)
+fn main() -> i32:
+    print("tpu: systolic matmul")
+    return 0

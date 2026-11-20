@@ -1,0 +1,2 @@
+fn ax_scale(value, scale) -> f64:
+    return value * scale

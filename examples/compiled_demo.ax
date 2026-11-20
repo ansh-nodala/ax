@@ -1,0 +1,7 @@
+fn main() -> i32:
+    first: f32 = 19.0
+    second: f32 = 23.0
+    total = first + second
+    print("This program was compiled by axc:")
+    print(total)
+    return 0

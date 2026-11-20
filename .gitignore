@@ -1,0 +1,14 @@
+/build/
+/build-*/
+/_CPack_Packages/
+/outputs/
+/work/
+/ex.ax
+/hello
+*.axg
+*.spv
+*.deb
+*.tar.gz
+*.o
+*.a
+*.so

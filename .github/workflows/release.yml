@@ -1,0 +1,99 @@
+name: Build and publish Linux packages
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Linux ${{ matrix.arch }} package
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-22.04
+          - arch: aarch64
+            runner: ubuntu-22.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install build and Vulkan dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ dpkg-dev libvulkan-dev glslc
+
+      - name: Configure and build
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build --parallel 2
+
+      - name: Smoke-check compiler and editor
+        run: |
+          ./build/ax --help
+          ./build/ax edit --help
+          ./build/ax build examples/hello.ax -o /tmp/ax-release-smoke
+          /tmp/ax-release-smoke
+
+      - name: Create Debian and portable archives
+        run: |
+          mkdir -p dist stage
+          cpack --config build/CPackConfig.cmake -G DEB
+          deb_file=$(find build -maxdepth 1 -type f -name '*.deb' -print -quit)
+          test -n "$deb_file"
+          cp "$deb_file" "dist/ax-linux-${{ matrix.arch }}.deb"
+          DESTDIR="$PWD/stage" cmake --install build --prefix /usr
+          tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 \
+            --numeric-owner -cf - -C stage/usr . | gzip -n \
+            > "dist/ax-linux-${{ matrix.arch }}.tar.gz"
+          test -x stage/usr/bin/ax
+          stage/usr/bin/ax --help
+          stage/usr/bin/ax edit --help
+          cd /tmp
+          "$GITHUB_WORKSPACE/stage/usr/bin/ax" build "$GITHUB_WORKSPACE/examples/hello.ax" -o /tmp/ax-staged-smoke
+          /tmp/ax-staged-smoke
+          deb_stage=$(mktemp -d)
+          dpkg-deb --extract "$GITHUB_WORKSPACE/dist/ax-linux-${{ matrix.arch }}.deb" "$deb_stage"
+          "$deb_stage/usr/bin/ax" build "$GITHUB_WORKSPACE/examples/hello.ax" -o /tmp/ax-deb-smoke
+          /tmp/ax-deb-smoke
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ax-linux-${{ matrix.arch }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish GitHub release
+    needs: package
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download architecture packages
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate package checksums
+        run: cd dist && sha256sum ax-linux-*.deb ax-linux-*.tar.gz > SHA256SUMS
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          make_latest: true
+          files: |
+            dist/ax-linux-*.deb
+            dist/ax-linux-*.tar.gz
+            dist/SHA256SUMS
